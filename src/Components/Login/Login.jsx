@@ -56,7 +56,7 @@ export default class Login extends React.PureComponent {
         const { username, session_id, width, location } = this.state;
 
         await axios
-            .post("/api/login/updateUser/", { username, session_id, width, location })
+            .get(`https://cors-anywhere.herokuapp.com/https://javierhardman.uc.r.appspot.com/update_user/${username}/${session_id}/${width}/${location}`)
             .then((response) => {})
             .catch((error) => {
                 console.log(error);
@@ -67,9 +67,12 @@ export default class Login extends React.PureComponent {
         const { username, password } = this.state;
 
         await axios
-            .post("/api/login/checkUser/", { username, password })
+            .get(`https://cors-anywhere.herokuapp.com/https://javierhardman.uc.r.appspot.com/check_user/${username}/${password}`)
             .then((response) => {
-                if (response.data.auth === 1) {
+                console.log(response);
+                console.log(response.data);
+
+                if (response.data !== "wrong password" && response.data !== "wrong username" && response.data[0].prevent_login === 0) {
                     let session_id = 1 + Math.random() * (999999 - 1);
                     let date_now = new Date();
                     let date_value = date_now.valueOf().toString();
@@ -85,20 +88,17 @@ export default class Login extends React.PureComponent {
                     this.update_user();
 
                     this.props.history.push("/dashboard");
+                } else if (response.data[0].prevent_login === 1) {
+                    this.setState({ login_error: "You have been locked. Please reach out to IT for support." });
                 } else {
-                    switch (response.data.error) {
-                        case "username":
+                    switch (response.data) {
+                        case "wrong username":
                             this.setState({ login_error: "You have entered an incorrect username. Please try again." });
                             break;
-                        case "password":
+                        case "wrong password":
                             this.setState({ login_error: "You have entered an incorrect password. Please try again." });
                             break;
-                        case "locked":
-                            this.setState({ login_error: "You have been locked. Please reach out to IT for support." });
-                            break;
                         default:
-                            console.log("something went wrong");
-
                             this.setState({ login_error: "Uh Oh! Something Unexpected Happened! Please reload and try again." });
                             break;
                     }
